@@ -1,0 +1,109 @@
+cabal-version:      3.6
+name:               aoc2023
+version:            0.0.1
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Tom Jemmett
+maintainer:         thomas.jemmett@nhs.net
+
+common shared-properties
+    build-depends:
+        array,
+        bifunctors,
+        bytestring,
+        containers,
+        directory,
+        fgl,
+        hashable,
+        lens,
+        mtl,
+        parsec,
+        pointedlist,
+        primes,
+        pqueue,
+        split,
+        time,
+        transformers,
+        unordered-containers,
+        utf8-string,
+        vector,
+        base ^>=4.19.0
+    default-extensions:
+        BangPatterns
+        BlockArguments
+        DataKinds
+        FlexibleContexts
+        FlexibleInstances
+        ImportQualifiedPost
+        LambdaCase
+        MultiWayIf
+        RecordWildCards
+        TupleSections
+        TypeApplications
+        TypeOperators
+        ViewPatterns
+    default-language: Haskell2010
+
+library
+    import:           shared-properties
+    exposed-modules:
+        Days
+        Common
+        PathFinding
+    other-modules:
+        Day01
+        Day02
+        Day03
+        Day04
+        Day05
+        Day06
+        Day07
+        Day08
+        Day09
+        Day10
+        Day11
+        Day12
+        Day13
+        Day14
+        Day15
+        Day16
+        Day17
+        Day18
+        Day19
+        Day20
+        Day21
+        Day22
+        Day23
+        Day24
+        Day25
+    hs-source-dirs:   src
+
+executable aoc2023
+    import:           shared-properties
+    main-is:          Main.hs
+    build-depends:
+        aoc2023
+    hs-source-dirs:   app
+
+test-suite spec
+    import:           shared-properties
+    type:             exitcode-stdio-1.0
+    other-modules:
+        Day01Spec
+        SpecHelper
+    hs-source-dirs:   test
+    main-is:          Spec.hs
+    build-depends:
+        hspec >= 2.7,
+        hspec-discover >= 2.7,
+        aoc2023 >= 0.0.1

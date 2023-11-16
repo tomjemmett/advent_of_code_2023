@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:aoc2023"
+
+    - path: "app/Main.hs"
+      component: "aoc2023:exe:aoc2023"
+
+    - path: "test"
+      component: "aoc2023:test:spec"
