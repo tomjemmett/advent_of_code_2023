@@ -41,14 +41,14 @@ parseInput = map (parse' p id) . lines
     pNumbers = [
       pNumber x |
       x <- zip [1..] ["one"
-                    ,"two"
-                    ,"three"
-                    ,"four"
-                    ,"five"
-                    ,"six"
-                    ,"seven"
-                    ,"eight"
-                    ,"nine"]]
+                     ,"two"
+                     ,"three"
+                     ,"four"
+                     ,"five"
+                     ,"six"
+                     ,"seven"
+                     ,"eight"
+                     ,"nine"]]
     pNumber :: (Int, String) -> Parser (Maybe (Either Int Int))
     pNumber (n, s) = Just (Right n) <$ P.string s
     --
