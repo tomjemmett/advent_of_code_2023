@@ -2,12 +2,8 @@ module Day01Spec (spec) where
 
 import SpecHelper
 
-testInput = ""
-
 spec :: Spec
 spec = describe "Day 1" $ do
-  it "Sample" $ do
-    day01 testInput `shouldBe` []
 
   it "Actual" $ do
     withFile
@@ -15,5 +11,5 @@ spec = describe "Day 1" $ do
       ReadMode
       ( \h -> do
           actualInput <- hGetContents h
-          day01 actualInput `shouldBe` []
+          day01 actualInput `shouldBe` ["54990", "54473"]
       )
