@@ -17,7 +17,7 @@ day01 input =
     f xs@(x : _) = x * 10 + last xs
 
 parseInput :: String -> [[Either Int Int]]
-parseInput = map (parse' p id) . lines
+parseInput = map (parse p) . lines
   where
     p :: Parser [Either Int Int]
     p = catMaybes <$> P.many (P.choice $ P.try <$> pNumbers ++ [pDigit, pFail])

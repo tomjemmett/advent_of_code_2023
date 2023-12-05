@@ -18,20 +18,19 @@ part1 = sum . map gameValid
 part2 = sum . map (product . snd)
 
 parseInput :: String -> [(Int, [Int])]
-parseInput = parse' (p `P.sepEndBy` P.newline) id
+parseInput = parseLines $ do
+  -- strip the id out between the text "Game " and ":"
+  gId <- P.between (symbol "Game") (P.char ':') number
+  -- get all of the colour/values for the entire game
+  grabs <- pCube `P.sepBy` P.oneOf ",;"
+  -- return the game and the values, reducing the R/G/B values to the max
+  -- value for the current game
+  pure (gId, foldr f [0, 0, 0] grabs)
   where
-    p = do
-      -- strip the id out between the text "Game " and ":"
-      gId <- P.between (P.string "Game ") (P.char ':') number
-      -- get all of the colour/values for the entire game
-      grabs <- pCube `P.sepBy` P.oneOf ",;"
-      -- return the game and the values, reducing the R/G/B values to the max
-      -- value for the current game
-      pure (gId, foldr f [0, 0, 0] grabs)
     pCube = do
       -- each cube starts with a space, followed by a number, followed by a
       -- space, but we only care about keeping the number
-      n <- P.between P.space P.space number
+      n <- P.space *> number
       -- get the name of the colour, which will be made up of letters only
       c <- P.many P.letter
       -- return the number and the colour

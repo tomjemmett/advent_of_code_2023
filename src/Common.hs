@@ -4,6 +4,7 @@ module Common where
 
 import Control.Applicative (liftA2)
 import Data.Char (digitToInt)
+import Data.Either (fromRight)
 import Data.Foldable (toList)
 import Data.List (sort, sortBy)
 import Data.List.Split (splitOn)
@@ -24,13 +25,13 @@ type Grid2d = V.Vector (V.Vector Int)
 
 type Interval = (Int, Int)
 
-countTrue :: Foldable f => (a -> Bool) -> f a -> Int
+countTrue :: (Foldable f) => (a -> Bool) -> f a -> Int
 countTrue p = length . filter p . toList
 
-isBetween :: Ord a => (a, a) -> a -> Bool
+isBetween :: (Ord a) => (a, a) -> a -> Bool
 isBetween (l, r) v = v >= l && v <= r
 
-linesRead :: Read a => String -> [a]
+linesRead :: (Read a) => String -> [a]
 linesRead = map read . lines
 
 linesWords :: String -> [[String]]
@@ -53,29 +54,6 @@ bitsToInt = sum . zipWith (*) (map (2 ^) [0 ..]) . reverse
 
 map2 :: (a -> b) -> [[a]] -> [[b]]
 map2 f = map (map f)
-
-parse :: Parser a -> String -> Either P.ParseError a
-parse = flip P.parse ""
-
--- assumes that the parser always succeeds, it applies a function f to the Right value from the parser
-parse' :: Parser a -> (a -> b) -> String -> b
-parse' p f s = case parse p s of Right x -> f x
-
-parseLines :: Parser a -> String -> [a]
-parseLines p = parse' (p `P.sepEndBy` P.newline) id
-
-number :: Parser Int
-number =
-  P.choice
-    [ P.char '-' *> fmap negate digits,
-      P.char '+' *> digits,
-      digits
-    ]
-  where
-    digits = read <$> P.many1 P.digit
-
-numbers :: String -> Parser [Int]
-numbers s = number `P.sepBy` (P.many1 . P.oneOf) s
 
 parseGrid2d :: String -> Grid2d
 parseGrid2d = V.fromList . map V.fromList . map2 digitToInt . lines
@@ -119,7 +97,7 @@ comparePoint2d (a, b) (c, d)
   | b > d = GT
   | otherwise = EQ
 
-median :: Ord a => [a] -> [a]
+median :: (Ord a) => [a] -> [a]
 median x = if odd lx then [xs !! hl] else [xs !! pred hl, xs !! hl]
   where
     xs = sort x
@@ -138,7 +116,7 @@ tuplify3 [a, b, c] = (a, b, c)
 untuplify3 :: (a, a, a) -> [a]
 untuplify3 (a, b, c) = [a, b, c]
 
-sortDesc :: Ord a => [a] -> [a]
+sortDesc :: (Ord a) => [a] -> [a]
 sortDesc = sortBy (flip compare)
 
 manhattanDistance :: Point2d -> Point2d -> Int
@@ -172,3 +150,57 @@ countReduce = foldr (flip (M.insertWith (+)) 1) M.empty
 
 (<&>) :: (a -> Bool) -> (a -> Bool) -> (a -> Bool)
 (<&>) = liftA2 (&&)
+
+-- the blackbird
+
+(...) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
+(...) = (.) (.) (.)
+
+infixr 8 ...
+
+-- Parsec
+parse :: Parser a -> String -> a
+parse = either (error . show) id ... flip P.parse ""
+
+parseLines :: Parser a -> String -> [a]
+parseLines p = parse (p `P.sepEndBy` P.newline)
+
+parseLinesWith :: Parser a -> String -> [a]
+parseLinesWith p s = parse p <$> lines s
+
+number :: Parser Int
+number = lexeme number'
+
+number' :: Parser Int
+number' =
+  P.choice
+    [ P.char '-' *> fmap negate digits,
+      P.char '+' *> digits,
+      digits
+    ]
+  where
+    digits = read <$> P.many1 P.digit
+
+numbers :: String -> Parser [Int]
+numbers s = number `P.sepBy` (P.many1 . P.oneOf) s
+
+lexeme :: P.Parsec String u a -> P.Parsec String u a
+lexeme p = p <* P.spaces
+
+symbol :: String -> Parser String
+symbol = lexeme . P.try . P.string
+
+parens :: Parser a -> Parser a
+parens = P.between (symbol "(") (symbol ")")
+
+braces :: Parser a -> Parser a
+braces = P.between (symbol "{") (symbol "}")
+
+brackets :: Parser a -> Parser a
+brackets = P.between (symbol "[") (symbol "]")
+
+commaSeparated :: Parser a -> Parser [a]
+commaSeparated = (`P.sepBy` symbol ",")
+
+tryAll :: [Parser a] -> Parser a
+tryAll = P.choice . map P.try

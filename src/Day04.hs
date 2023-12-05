@@ -31,11 +31,8 @@ go = fst . foldl f ([0, 0], repeat 1)
 -- parse each card into a number representing the amount of myNumbers which
 -- matched winningNumbers, i.e. the amount that card won
 parseInput :: String -> [Int]
-parseInput = parse' (p `P.sepEndBy` P.newline) id
-  where
-    p = do
-      P.string "Card " `P.between` P.char ':' $ q
-      winningNumbers <- S.fromList <$> P.manyTill (q <* P.char ' ') (P.char '|')
-      myNumbers <- S.fromList <$> q `P.sepBy` P.char ' '
-      pure $ S.size $ S.intersection winningNumbers myNumbers
-    q = P.many P.space *> number
+parseInput = parseLinesWith $ do
+  symbol "Card" *> number *> symbol ":"
+  winningNumbers <- S.fromList <$> P.manyTill number (symbol "|")
+  myNumbers <- S.fromList <$> P.many number
+  pure $ S.size $ S.intersection winningNumbers myNumbers

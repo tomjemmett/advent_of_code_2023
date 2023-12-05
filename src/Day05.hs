@@ -27,17 +27,15 @@ part2 (s, m) = minimum $ p2 s
 
 -- assume maps go a->b, b->c, c->d ...
 parseInput :: String -> Input
-parseInput = (`parse'` id) $ do
-  seeds <- P.string "seeds: " *> P.sepBy number (P.char ' ')
-  P.newline
-  P.newline
+parseInput = parse $ do
+  seeds <- symbol "seeds:" *> P.many number
   maps <- (`P.sepEndBy` P.newline) $ do
-    P.manyTill P.anyChar (P.string ":\n")
+    P.manyTill P.anyChar (symbol ":")
     --
     (`P.sepEndBy` P.newline) $ do
-      d <- number <* P.char ' '
-      s <- number <* P.char ' '
-      n <- number
+      d <- number
+      s <- number
+      n <- number'
       pure (d, s, n)
   pure (seeds, maps)
 
