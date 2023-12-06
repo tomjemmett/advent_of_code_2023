@@ -1,8 +1,6 @@
 module Day06 where -- (day06) where
 
 import Common
-import Control.Monad (ap)
-import Data.Bifunctor (bimap)
 import Text.Parsec qualified as P
 
 day06 :: AOCSolution
