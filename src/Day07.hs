@@ -1,6 +1,7 @@
-module Day07 (day07) where
+module Day07 where --(day07) where
 
 import Common
+import Control.Monad (ap)
 import Data.Function (on)
 import Data.List (sortBy, group, elemIndex, splitAt)
 import Text.Parsec qualified as P
@@ -31,7 +32,7 @@ data Card
   | Ace deriving (Show, Eq, Ord)
 
 day07 :: AOCSolution
-day07 input = show . solve <$> (parseInput <$> [False, True] <*> pure input)
+day07 = map (show . solve) . ap (parseInput <$> [False, True]) . pure
 
 solve :: Input -> Int
 solve = sum . zipWith (*) [1..] . map snd
