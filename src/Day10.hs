@@ -1,133 +1,81 @@
-module Day10 where -- (day10) where
+module Day10 (day10) where
 
 import Common
-import PathFinding
-import Control.Monad (ap, guard, forM_)
-import Control.Monad.State
+import Control.Monad (ap)
 import Data.Maybe (mapMaybe)
 import Data.HashMap.Strict qualified as M
-import Data.HashSet qualified as S
-import Data.Vector.Generic.Mutable (fill)
 
 day10 :: AOCSolution
 day10 = map show . ap [part1, part2] . pure . parseInput
-
-
-findLoop :: M.HashMap Point2d Char -> S.HashSet Point2d
-findLoop m = go S.empty s
-  where
-    s = M.keys $ M.filter (=='S') m
-    go :: S.HashSet Point2d -> [Point2d] -> S.HashSet Point2d
-    go s [] = s
-    go s (p:ps) = if S.member p s
-      then go s ps
-      else go (S.insert p s) (ps ++ ns)
-      where
-        ns = neighbours m p
-    neighbours :: M.HashMap Point2d Char -> Point2d -> [Point2d]
-    neighbours m p@(x, y) = mapMaybe g $ case m M.! p of
-      '-' ->
-        [ ((x-1, y), "FL-")
-        , ((x+1, y), "J7-")
-        ]
-      '|' ->
-        [ ((x, y-1), "F7|")
-        , ((x, y+1), "LJ|")
-        ]
-      'F' ->
-        [ ((x+1, y), "J7-")
-        , ((x, y+1), "LJ|")
-        ]
-      '7' ->
-        [ ((x-1, y), "FL-")
-        , ((x, y+1), "LJ|")
-        ]
-      'J' ->
-        [ ((x-1, y), "FL-")
-        , ((x, y-1), "F7|")
-        ]
-      'L' ->
-        [ ((x+1, y), "J7-")
-        , ((x, y-1), "F7|")
-        ]
-      'S' -> 
-        [ ((x-1, y), "FL-")
-        , ((x+1, y), "J7-")
-        , ((x, y-1), "F7|")
-        , ((x, y+1), "LJ|")
-        ]
-      '.' -> []
-      where
-        f = flip (M.findWithDefault '.') m
-        g (p, t) = if f p `elem` t then Just p else Nothing
-
         
-part1 :: M.HashMap Point2d Char -> Int
-part1 = (`div` 2) . M.size . M.filter (/= '.')
+part1 :: [Point2d] -> Int
+part1 = (`div` 2) . length
 
-part2 :: M.HashMap Point2d Char -> Int
-part2 = M.size . M.filter (== '.') . reduceGrid . fillGrid . doubleGrid
+-- https://en.wikipedia.org/wiki/Pick%27s_theorem
+part2 :: [Point2d] -> Int
+part2 i = shoelace i + 1 - part1 i
 
-doubleGrid :: M.HashMap Point2d Char -> M.HashMap Point2d Char
-doubleGrid m = M.fromList $ concatMap f $ M.toList m
+-- https://en.wikipedia.org/wiki/Shoelace_formula
+shoelace :: [Point2d] -> Int
+shoelace xs = (`div` 2) . abs $ f (last xs : xs)
   where
-    f (((*2) -> x, (*2) -> y), v) = ((x, y), v) : case v of
-      '.' -> []
-      '-' -> [((x + 1, y), '-')]
-      '|' -> [((x, y + 1), '|')]
-      'F' -> [((x + 1, y), '-'), ((x, y + 1), '|')]
-      '7' -> [((x, y + 1), '|')]
-      'L' -> [((x + 1, y), '-')]
-      'J' -> []
-      'S' -> [ ((x + 1, y), '-')
-             | M.findWithDefault '.' ((x `div` 2) + 1, y `div` 2) m `elem` "J7-"] ++
-             [ ((x, y + 1), '|')
-             | M.findWithDefault '.' (x `div` 2, (y `div` 2) + 1) m `elem` "JL|"]
+    f [_] = 0
+    f ((x1, y1):p@(x2, y2):xs) = x1 * y2 - x2 * y1 + f (p:xs)
 
-reduceGrid :: M.HashMap Point2d Char -> M.HashMap Point2d Char
-reduceGrid = M.fromList . mapMaybe g . M.toList
-  where
-    g :: (Point2d, Char) -> Maybe (Point2d, Char)
-    g ((x, y), v)
-      | odd x = Nothing
-      | odd y = Nothing
-      | otherwise = Just ((x `div` 2, y `div` 2), v)
+parseInput :: String -> [Point2d]
+parseInput input = findLoop $ M.fromList
+  [ ((c, r), v)
+  | (r, line) <- zip [0..] $ lines input
+  , (c, v) <- zip [0..] line,
+  v /= '.']
 
-fillGrid :: M.HashMap Point2d Char -> M.HashMap Point2d Char
-fillGrid m = go m op
+findLoop :: M.HashMap Point2d Char -> [Point2d]
+findLoop m = go s start
   where
-    lu = flip (M.findWithDefault '.') m
-    op = filter ((=='.') . lu) $ outerPoints $ bounds $ M.keys m
-    go :: M.HashMap Point2d Char -> [Point2d] -> M.HashMap Point2d Char
-    go m [] = m
-    go m (p:ps) = if M.lookupDefault '.' p m /= '.'
-      then go m ps
-      else go m' (n ++ ps)
+    (s:_) = M.keys $ M.filter (=='S') m
+    (start:_) = neighbours m s
+    go :: Point2d -> Point2d -> [Point2d]
+    go from p
+      | m M.! p /= 'S'
+        = p : go p (if a == from then b else a)
+      | otherwise
+        = [p]
       where
-        n = filter (inBounds m) $ point2dNeighbours p
-        m' = M.insert p 'O' m
+        [a, b] = neighbours m p
 
-outerPoints :: (Point2d, Point2d) -> [Point2d]
-outerPoints ((minx, miny), (maxx, maxy)) =
-  [ (x, y)
-  | x <- [minx..maxx]
-  , y <- [miny, maxy]
-  ] ++ 
-  [ (x, y)
-  | x <- [minx, maxx]
-  , y <- [miny..maxy]
-  ]
-
-inBounds :: M.HashMap Point2d a -> Point2d -> Bool
-inBounds m (x, y) = x >= minx && x <= maxx && y >= miny && y <= maxy
+neighbours :: M.HashMap Point2d Char -> Point2d -> [Point2d]
+neighbours m p@(x, y) = mapMaybe g $ case m M.! p of
+  '-' ->
+    [ ((x-1, y), "FL-")
+    , ((x+1, y), "J7-")
+    ]
+  '|' ->
+    [ ((x, y-1), "F7|")
+    , ((x, y+1), "LJ|")
+    ]
+  'F' ->
+    [ ((x+1, y), "J7-")
+    , ((x, y+1), "LJ|")
+    ]
+  '7' ->
+    [ ((x-1, y), "FL-")
+    , ((x, y+1), "LJ|")
+    ]
+  'J' ->
+    [ ((x-1, y), "FL-")
+    , ((x, y-1), "F7|")
+    ]
+  'L' ->
+    [ ((x+1, y), "J7-")
+    , ((x, y-1), "F7|")
+    ]
+  'S' -> 
+    [ ((x-1, y), "FL-")
+    , ((x+1, y), "J7-")
+    , ((x, y-1), "F7|")
+    , ((x, y+1), "LJ|")
+    ]
+  '.' -> []
   where
-    ((minx, miny), (maxx, maxy)) = bounds $ M.keys m
-
-parseInput :: String -> M.HashMap Point2d Char
-parseInput input = M.mapWithKey (\k v -> if S.member k loop then v else '.') i
-  where
-    i = M.fromList
-      [ ((c, r), v)
-      | (r, line) <- zip [0..] $ lines input
-      , (c, v) <- zip [0..] line]  
-    loop = findLoop i
+    f = flip (M.findWithDefault '.') m
+    g (p, t) = if f p `elem` 'S':t then Just p else Nothing
