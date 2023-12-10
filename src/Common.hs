@@ -9,6 +9,7 @@ import Data.Foldable (toList)
 import Data.List (sort, sortBy)
 import Data.List.Split (splitOn)
 import Data.Map qualified as M
+import Data.HashMap.Strict qualified as HM
 import Data.Maybe (fromMaybe)
 import Data.Vector ((!), (!?))
 import Data.Vector qualified as V
@@ -204,3 +205,18 @@ commaSeparated = (`P.sepBy` symbol ",")
 
 tryAll :: [Parser a] -> Parser a
 tryAll = P.choice . map P.try
+
+
+
+point2dGridToString :: Char -> (Point2d, Point2d) -> HM.HashMap Point2d Char -> String
+point2dGridToString d ((minx, miny), (maxx, maxy)) g = unlines [
+  [HM.lookupDefault d (x, y) g | x <- [minx..maxx]] | y <- [miny..maxy]]
+
+point2dGridToString' :: Char -> HM.HashMap Point2d Char -> String
+point2dGridToString' d g = point2dGridToString d (bounds $ HM.keys g) g
+
+bounds :: [Point2d] -> (Point2d, Point2d)
+bounds k = ((minimum xs, minimum ys), (maximum xs, maximum ys))
+  where
+    xs = map fst k
+    ys = map snd k
