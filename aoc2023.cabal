@@ -33,6 +33,7 @@ common shared-properties
         pqueue,
         split,
         time,
+        timeit,
         transformers,
         unordered-containers,
         utf8-string,

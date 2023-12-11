@@ -28,6 +28,7 @@ module Days
   )
 where
 
+import Control.Monad (when)
 import Day01
 import Day02
 import Day03
@@ -54,6 +55,7 @@ import Day23
 import Day24
 import Day25
 import System.Directory (doesFileExist)
+import System.TimeIt (timeIt)
 
 days =
   [ (day01, "inputs/day01.txt"),
@@ -87,12 +89,11 @@ runDay :: Int -> IO ()
 runDay day = do
   let (fn, file) = days !! pred day
   fileExists <- doesFileExist file
-  if fileExists
-    then do
+  when fileExists do
+    input <- readFile file
+
+    when (input /= "") $ timeIt do
       putStrLn $ replicate 80 '-'
       putStr $ "Day: " ++ show day
       putStrLn ""
-      input <- readFile file
       putStr $ unlines $ fn input
-    else do
-      putStr ""
