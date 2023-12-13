@@ -2,12 +2,28 @@ module Day13Spec (spec) where
 
 import SpecHelper
 
-testInput = ""
+testInput =
+  "#.##..##.\n\
+  \..#.##.#.\n\
+  \##......#\n\
+  \##......#\n\
+  \..#.##.#.\n\
+  \..##..##.\n\
+  \#.#.##.#.\n\
+  \\n\
+  \#...##..#\n\
+  \#....#..#\n\
+  \..##..###\n\
+  \#####.##.\n\
+  \#####.##.\n\
+  \..##..###\n\
+  \#....#..#\n\
+  \\n"
 
 spec :: Spec
 spec = describe "Day 13" $ do
   it "Sample" $ do
-    day13 testInput `shouldBe` []
+    day13 testInput `shouldBe` ["405", "400"]
 
   it "Actual" $ do
     withFile
@@ -15,5 +31,5 @@ spec = describe "Day 13" $ do
       ReadMode
       ( \h -> do
           actualInput <- hGetContents h
-          day13 actualInput `shouldBe` []
+          day13 actualInput `shouldBe` ["37113", "30449"]
       )

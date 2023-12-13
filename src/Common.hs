@@ -6,10 +6,10 @@ import Control.Applicative (liftA2)
 import Data.Char (digitToInt)
 import Data.Either (fromRight)
 import Data.Foldable (toList)
+import Data.HashMap.Strict qualified as HM
 import Data.List (sort, sortBy)
 import Data.List.Split (splitOn)
 import Data.Map qualified as M
-import Data.HashMap.Strict qualified as HM
 import Data.Maybe (fromMaybe)
 import Data.Vector ((!), (!?))
 import Data.Vector qualified as V
@@ -123,6 +123,9 @@ sortDesc = sortBy (flip compare)
 manhattanDistance :: Point2d -> Point2d -> Int
 manhattanDistance (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
 
+hammingDistance :: (Eq b) => [b] -> [b] -> Int
+hammingDistance xs ys = sum . map fromEnum $ zipWith (/=) xs ys
+
 intervalsIntersect :: Interval -> Interval -> Bool
 intervalsIntersect (a1, a2) (b1, b2) =
   or
@@ -206,11 +209,11 @@ commaSeparated = (`P.sepBy` symbol ",")
 tryAll :: [Parser a] -> Parser a
 tryAll = P.choice . map P.try
 
-
-
 point2dGridToString :: Char -> (Point2d, Point2d) -> HM.HashMap Point2d Char -> String
-point2dGridToString d ((minx, miny), (maxx, maxy)) g = unlines [
-  [HM.lookupDefault d (x, y) g | x <- [minx..maxx]] | y <- [miny..maxy]]
+point2dGridToString d ((minx, miny), (maxx, maxy)) g =
+  unlines
+    [ [HM.lookupDefault d (x, y) g | x <- [minx .. maxx]] | y <- [miny .. maxy]
+    ]
 
 point2dGridToString' :: Char -> HM.HashMap Point2d Char -> String
 point2dGridToString' d g = point2dGridToString d (bounds $ HM.keys g) g
