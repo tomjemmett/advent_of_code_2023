@@ -3,6 +3,7 @@
 module Common where
 
 import Control.Applicative (liftA2)
+import Data.Array qualified as A
 import Data.Char (digitToInt)
 import Data.Either (fromRight)
 import Data.Foldable (toList)
@@ -154,6 +155,36 @@ countReduce = foldr (flip (M.insertWith (+)) 1) M.empty
 
 (<&>) :: (a -> Bool) -> (a -> Bool) -> (a -> Bool)
 (<&>) = liftA2 (&&)
+
+-- good example of DP memoization in Haskell
+--  source: https://jelv.is/blog/Lazy-Dynamic-Programming/
+wagnerFischer :: String -> String -> Int
+wagnerFischer a b = d m n
+  where
+    (m, n) = (length a, length b)
+    a' = A.listArray (1, m) a
+    b' = A.listArray (1, n) b
+    -- initialise the array: if we haven't consumed any values of b (j == 0)
+    -- then the edit distance is the amount of values we have consumed of a (i)
+    d i 0 = i
+    -- and vice versa
+    d 0 j = j
+    -- now, compare each position in a to each position in b
+    d i j
+      -- the characters at i and j are the same, use the edit distance from the
+      -- previous point
+      | a' A.! i == b' A.! j = ds A.! (i - 1, j - 1)
+      -- our values don't match, so find the smallest edit from the previous
+      -- values in the array
+      | otherwise =
+          minimum
+            [ ds A.! (i - 1, j) + 1, -- delete
+              ds A.! (i, j - 1) + 1, -- insert
+              ds A.! (i - 1, j - 1) + 1 -- modify
+            ]
+    -- build the array, using the d function from above
+    ds = A.listArray bounds [d i j | (i, j) <- A.range bounds]
+    bounds = ((0, 0), (m, n))
 
 -- the blackbird
 
