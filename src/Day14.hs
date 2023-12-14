@@ -1,4 +1,4 @@
-module Day14 where -- (day14) where
+module Day14 (day14) where
 
 import Common
 import Control.Monad (ap)
