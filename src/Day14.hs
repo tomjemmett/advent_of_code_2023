@@ -1,10 +1,11 @@
-module Day14 (day14) where
+module Day14 where -- (day14) where
 
 import Common
 import Control.Monad (ap)
 import Data.Array qualified as A
 import Data.Foldable qualified as F (toList)
 import Data.HashMap.Strict qualified as M
+import Data.Hashable (Hashable)
 
 type Input = A.Array Point2d Char
 
@@ -12,20 +13,8 @@ day14 :: AOCSolution
 day14 = map show . ap [part1, part2] . pure . parseInput
 
 part1, part2 :: Input -> Int
-part1 i = solve $ roll i 'N'
-part2 i = values M.! index
-  where
-    ((end, start), values) = go 1 (M.singleton (F.toList i) (0, solve i)) i
-    loop = end - start
-    index = ((1000000000 - start) `mod` loop) + start + 1
-    go :: Int -> M.HashMap String (Int, Int) -> Input -> ((Int, Int), M.HashMap Int Int)
-    go n m i = case M.lookup k m of
-      Just r -> ((n, fst r), M.fromList $ M.elems m)
-      Nothing -> go (succ n) m' i'
-      where
-        i' = spinCycle i
-        k = F.toList i'
-        m' = M.insert k (n, solve i) m
+part1 = solve . flip roll 'N'
+part2 = findRepeatingPattern 1000000000 spinCycle F.toList solve
 
 solve :: Input -> Int
 solve i = sum do

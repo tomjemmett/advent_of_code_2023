@@ -1,3 +1,4 @@
+{-# LANGUAGE ExplicitForAll #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Common where
@@ -8,6 +9,7 @@ import Data.Char (digitToInt)
 import Data.Either (fromRight)
 import Data.Foldable (toList)
 import Data.HashMap.Strict qualified as HM
+import Data.Hashable (Hashable)
 import Data.List (sort, sortBy)
 import Data.List.Split (splitOn)
 import Data.Map qualified as M
@@ -254,3 +256,29 @@ bounds k = ((minimum xs, minimum ys), (maximum xs, maximum ys))
   where
     xs = map fst k
     ys = map snd k
+
+--
+
+findRepeatingPattern :: (Hashable k) => Int -> (b -> b) -> (b -> k) -> (b -> a) -> b -> a
+findRepeatingPattern iterations f createKey solve input = values HM.! index
+  where
+    init = HM.singleton (createKey input) (0, solve input)
+    ((end, start), values) = go f createKey solve 1 init input
+    loop = end - start
+    index = ((iterations - start) `mod` loop) + start + 1
+    go ::
+      (Hashable k) =>
+      (b -> b) ->
+      (b -> k) ->
+      (b -> a) ->
+      Int ->
+      HM.HashMap k (Int, a) ->
+      b ->
+      ((Int, Int), HM.HashMap Int a)
+    go f createKey solve n m i = case HM.lookup k m of
+      Just r -> ((n, fst r), HM.fromList $ HM.elems m)
+      Nothing -> go f createKey solve (succ n) m' i'
+      where
+        i' = f i
+        k = createKey i'
+        m' = HM.insert k (n, solve i) m
