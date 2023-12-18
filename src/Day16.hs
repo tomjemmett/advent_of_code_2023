@@ -1,28 +1,30 @@
 module Day16 (day16) where
 
 import Common
-import Control.Monad (ap, forM_, unless)
-import Control.Monad.State (MonadState (get), State, execState, modify)
+import Control.Monad (ap)
 import Data.Array qualified as A
 import Data.HashSet qualified as S
-import Data.List (nub)
 
 type Input = A.Array Point2d Char
 
 day16 :: AOCSolution
 day16 = map show . ap [part1, part2] . pure . parseInput
 
-search :: Input -> (Point2d, Point2d) -> State (S.HashSet (Point2d, Point2d)) ()
-search g pd@(p, d) = do
-  s <- get
-  unless (pd `S.member` s) do
-    let t = g A.! p
-    modify $ S.insert pd
-    forM_ (filter (A.inRange (A.bounds g) . fst) $ move (p, d) t) (search g)
+search :: Input -> [(Point2d, Point2d)] -> S.HashSet (Point2d, Point2d) -> Int
+search g [] v = countTrue ((/= '@') . (g A.!)) . S.map fst $ v
+search g (pd@(p, d) : ps) v =
+  if pd `S.member` v
+    then search g ps v
+    else search g ps' v'
+  where
+    v' = S.insert pd v
+    t = g A.! p
+    ps' = move (p, d) t ++ ps
 
 move :: (Point2d, Point2d) -> Char -> [(Point2d, Point2d)]
 move (p@(y, x), d@(dy, dx)) = f
   where
+    f '@' = []
     f '.' = [((y + dy, x + dx), d)]
     f '#' = [((y + dy, x + dx), d)]
     f '|'
@@ -51,7 +53,7 @@ move (p@(y, x), d@(dy, dx)) = f
             else [((y, x - 1), (0, -1))]
 
 go :: Input -> (Point2d, Point2d) -> Int
-go i pd = length $ nub $ map fst $ S.toList $ execState (search i pd) mempty
+go i pd = search i [pd] mempty
 
 part1, part2 :: Input -> Int
 part1 i = go i ((1, 1), (0, 1))
@@ -61,16 +63,16 @@ part2 i = maximum $ map (go i) starts
     starts :: [(Point2d, Point2d)]
     starts =
       concat
-        [ [((minr, c), (1, 0)) | c <- [minc .. maxc]],
-          [((maxr, c), (-1, 0)) | c <- [minc .. maxc]],
-          [((r, minc), (0, 1)) | r <- [minr .. maxr]],
-          [((r, maxc), (0, -1)) | r <- [minr .. maxr]]
+        [ [((succ minr, c), (1, 0)) | c <- [minc .. maxc]],
+          [((pred maxr, c), (-1, 0)) | c <- [minc .. maxc]],
+          [((r, succ minc), (0, 1)) | r <- [minr .. maxr]],
+          [((r, pred maxc), (0, -1)) | r <- [minr .. maxr]]
         ]
 
 parseInput :: String -> Input
-parseInput input = A.listArray ((1, 1), (nr, nc)) a
+parseInput input = A.listArray ((0, 0), (nr + 1, nc + 1)) (repeat '@') A.// a
   where
     i = lines input
     nr = length i
     nc = length $ head i
-    a = [v | vs <- i, v <- vs]
+    a = [((r, c), v) | (r, vs) <- zip [1 ..] i, (c, v) <- zip [1 ..] vs]
