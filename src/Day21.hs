@@ -1,37 +1,30 @@
 module Day21 (day21) where
 
 import Common
-import Control.Monad (ap)
-import Control.Monad.Writer
 import Data.HashSet qualified as S
 import Data.List (find)
 
+gridSize :: Int
+gridSize = 131
+
 day21 :: AOCSolution
-day21 = map show . ap [part1, part2] . pure . parseInput
-
-go :: Int -> (S.HashSet Point2d, Point2d) -> Int
-go i (g, s) = S.size $ step g i $ S.singleton s
-
-part1 :: (S.HashSet Point2d, Point2d) -> Int
-part1 = go 64
-
-part2 :: (S.HashSet Point2d, Point2d) -> Int
-part2 i = b0 + b1 * goal + (n * pred n `div` 2) * (b2 - b1)
+day21 input = show <$> [p1, p2]
   where
-    goal = 26501365
-    n = goal `div` 131
-    [a0, a1, a2] = map (\x -> go (65 + x * 131) i) [0 .. 2]
-    b0 = a0
-    b1 = a1 - a0
-    b2 = a2 - a1
+    (g, s) = parseInput input
+    r = map S.size $ iterate (step g) $ S.singleton s
+    p1 = r !! 64
+    p2 = solve r
 
-step :: S.HashSet Point2d -> Int -> S.HashSet Point2d -> S.HashSet Point2d
-step g 0 ps = ps
-step g i ps = step g (pred i) $ S.filter isGarden $ S.fromList $ concatMap point2dNeighbours ps
+solve :: [Int] -> Int
+solve r = a0 + (a1 - a0) * n + (n * pred n `div` 2) * (a2 - 2 * a1 + a0)
   where
-    -- hardcoded input grid size for actual input
-    size = 131
-    isGarden (x, y) = not $ (x `mod` size, y `mod` size) `S.member` g
+    n = 26501365 `div` gridSize
+    [a0, a1, a2] = (r !!) <$> [65 + i * gridSize | i <- [0 .. 2]]
+
+step :: S.HashSet Point2d -> S.HashSet Point2d -> S.HashSet Point2d
+step g ps = S.filter isGarden $ S.fromList $ concatMap point2dNeighbours ps
+  where
+    isGarden = not . flip S.member g . flip both (`mod` gridSize)
 
 parseInput :: String -> (S.HashSet Point2d, Point2d)
 parseInput input = (S.delete s $ S.fromList $ map fst g, s)

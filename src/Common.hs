@@ -282,3 +282,6 @@ findRepeatingPattern iterations f createKey solve input = values HM.! index
         i' = f i
         k = createKey i'
         m' = HM.insert k (n, solve i) m
+
+both :: (a, a) -> (a -> b) -> (b, b)
+both (x, y) f = (f x, f y)
