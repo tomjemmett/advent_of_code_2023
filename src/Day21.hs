@@ -1,11 +1,10 @@
-module Day21 where -- (day21) where
+module Day21 (day21) where
 
 import Common
 import Control.Monad (ap)
 import Control.Monad.Writer
 import Data.HashSet qualified as S
 import Data.List (find)
-import Text.Parsec qualified as P
 
 day21 :: AOCSolution
 day21 = map show . ap [part1, part2] . pure . parseInput
@@ -32,15 +31,15 @@ step g i ps = step g (pred i) $ S.filter isGarden $ S.fromList $ concatMap point
   where
     -- hardcoded input grid size for actual input
     size = 131
-    isGarden (x, y) = (x `mod` size, y `mod` size) `S.member` g
+    isGarden (x, y) = not $ (x `mod` size, y `mod` size) `S.member` g
 
 parseInput :: String -> (S.HashSet Point2d, Point2d)
-parseInput input = (S.fromList $ map fst g, s)
+parseInput input = (S.delete s $ S.fromList $ map fst g, s)
   where
     Just s = fst <$> find ((== 'S') . snd) g
     g =
       [ ((c, r), v)
         | (r, vs) <- zip [0 ..] $ lines input,
           (c, v) <- zip [0 ..] vs,
-          v /= '#'
+          v /= '.'
       ]
