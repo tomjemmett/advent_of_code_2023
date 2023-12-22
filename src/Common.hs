@@ -101,6 +101,11 @@ comparePoint2d (a, b) (c, d)
   | b > d = GT
   | otherwise = EQ
 
+point3dX, point3dY, point3dZ :: Point3d -> Int
+point3dX (x, _, _) = x
+point3dY (_, y, _) = y
+point3dZ (_, _, z) = z
+
 median :: (Ord a) => [a] -> [a]
 median x = if odd lx then [xs !! hl] else [xs !! pred hl, xs !! hl]
   where
